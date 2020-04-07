@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>workerman 实战 web聊天室</title>
+
+    <link rel="stylesheet" href="/static/dist/css/layui.css">
+    <style>
+        html {
+            background-color: #333;
+        }
+    </style>
+</head>
+<body>
+
+
+<script src="/static/dist/layui.js"></script>
+<script>
+    layui.use('layim', function (layim) {
+
+        let ws = new WebSocket('ws://192.168.245.130:7777?token='+window.localStorage.getItem('token'));
+
+        layim.config({
+            init: {
+                url: "init",
+                type: 'post',
+                data: {
+                    token: window.localStorage.getItem('token')
+                }
+            },
+            // uploadImage:{
+            // 	url:'http://www.layim.com/upload.php'
+            // },
+        })
+    })
+</script>
+</body>
+</html>
