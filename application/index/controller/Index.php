@@ -7,6 +7,13 @@ use think\facade\Request;
 
 class Index extends Controller
 {
+    public function initialize()
+    {
+        if (!session('?uid')) {
+            $this->redirect('login');
+        }
+    }
+
     public function index()
     {
         return view();
@@ -15,8 +22,8 @@ class Index extends Controller
     public function init()
     {
         $redis = Cache::store('redis')->handler();
-        $key = config('chat.key');
         $token = input('token');
+        $key = config('chat.key');
         $username = decrypt($token, $key);
         $userInfo = $redis->hGetAll('user:' . $username);
         $keys = $redis->keys('user:*');
@@ -73,7 +80,7 @@ class Index extends Controller
                 'status' => 'online'
             ];
             $redis->hMset('user:' . $data['username'], $userInfo);
-            //session('username', $data['username']);
+            session('uid', $userInfo['id']);
             $key = config('chat.key');
             $token = encrypt($data['username'], $key);
             $res = [
@@ -112,7 +119,7 @@ class Index extends Controller
                             'token' => $token
                         ]
                     ];
-                    session('username', $data['username']);
+                    session('uid', $userInfo['id']);
                     return json($res);
                 }else{
                     $res = [
@@ -125,5 +132,64 @@ class Index extends Controller
             }
         }
         return view();
+    }
+
+    public function uploadImage()
+    {
+        $file     = Request::file('file');
+        $info     = $file->move( './uploads/image');
+        $file_url = '/uploads/image/' . $info->getSaveName();
+        if ($info) {
+            $res = [
+                'code' => 0,
+                'msg' => '',
+                'data' => [
+                    'src' => $file_url,
+                    'name' => $info->getFilename()
+                ]
+            ];
+            return json($res);
+        }else{
+            $res = [
+                'code' => 1,
+                'msg' => '文件上传失败',
+                'data' => []
+            ];
+            return json($res);
+        }
+    }
+
+    public function chatlog()
+    {
+        $to_id = Request::param('id');
+        $from_id = session('uid');
+        $arr = [$from_id, $to_id];
+        sort($arr);
+        $redis = Cache::store('redis')->handler();
+        if ($redis->exists("chat:{$arr[0]}:{$arr[1]}")){
+            $chat_record = $redis->lRange("chat:{$arr[0]}:{$arr[1]}", 0, -1);
+            foreach ($chat_record as $k => $v){
+                $chat_record[$k] = json_decode($v, true);
+            }
+            $res = [
+                'code' => 0,
+                'msg' => '',
+                'data' => $chat_record
+            ];
+            $this->assign('chat_record', json_encode($res, 258));
+        }
+        return view();
+    }
+
+    public function updateSign()
+    {
+        $sign = Request::post('sign');
+        $token = Request::post('token');
+        $key = config('chat.key');
+        $username = decrypt($token, $key);
+        $redis = Cache::store('redis')->handler();
+        $userInfo = $redis->hGetAll('user:' . $username);
+        $userInfo['sign'] = $sign;
+        $redis->hMset('user:' . $username, $userInfo);
     }
 }

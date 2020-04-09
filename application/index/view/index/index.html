@@ -18,8 +18,9 @@
 <script src="/static/dist/layui.js"></script>
 <script>
     layui.use('layim', function (layim) {
+        let $ = layui.$;
 
-        let ws = new WebSocket('ws://192.168.245.130:7777?token='+window.localStorage.getItem('token'));
+        let ws = new WebSocket('ws://192.168.245.130:7777?token=' + window.localStorage.getItem('token'));
 
         layim.config({
             init: {
@@ -29,10 +30,45 @@
                     token: window.localStorage.getItem('token')
                 }
             },
-            // uploadImage:{
-            // 	url:'http://www.layim.com/upload.php'
-            // },
-        })
+            uploadImage:{
+                url: "uploadImage"
+            },
+            notice: true,
+            // 查看更多聊天记录
+            chatLog: 'chatlog'
+        });
+
+        layim.on('sendMessage', function (res) {
+            ws.send(JSON.stringify({
+                type: 'message',
+                data: res
+            }));
+        });
+
+        // 监听修改签名
+        layim.on('sign', function(value){
+            $.ajax({
+                url: 'updateSign',
+                type: 'post',
+                data: {sign: value, token: window.localStorage.getItem('token')},
+                dataType: 'json',
+                success: res => {
+
+                }
+            })
+        });
+
+        ws.onmessage = function(e) {
+            let res = JSON.parse(e.data);
+
+            if(res.emit === 'message'){
+                layim.getMessage(res.data);
+            }
+        };
+
+        layim.on('chatChange', function (res) {
+            console.log(res);
+        });
     })
 </script>
 </body>

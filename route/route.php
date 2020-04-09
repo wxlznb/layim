@@ -15,3 +15,6 @@ Route::rule('register', 'index/index/register', 'get|post');
 Route::rule('login', 'index/index/login', 'get|post');
 Route::get('chat', 'index/index/index');
 Route::post('init', 'index/index/init');
+Route::rule('uploadImage', 'index/index/uploadImage', 'post');
+Route::rule('chatlog', 'index/index/chatlog', 'get');
+Route::post('updateSign', 'index/index/updateSign');
